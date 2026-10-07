@@ -1,0 +1,12 @@
+{% extends "_base_email.html" %}
+{% block content %}
+<h2 style="color:#233D4C; margin-top:0;">{{ 'Payment Overdue' if is_overdue else 'Payment Due Soon' }}</h2>
+<p style="color:#3d3d3a; line-height:1.6;">Hi {{ full_name }}, this is a reminder that your medicine bill is
+  {% if is_overdue %}now overdue.{% else %}due soon.{% endif %}
+</p>
+<table role="presentation" width="100%" cellpadding="8" style="background-color:#FFD2C2; border-radius:8px; margin:16px 0;">
+  <tr><td style="color:#233D4C; font-weight:bold;">Amount Due</td><td style="color:#233D4C;">₹{{ '%.2f' | format(bill.balance_due) }}</td></tr>
+  <tr><td style="color:#233D4C; font-weight:bold;">Due Date</td><td style="color:#233D4C;">{{ bill.due_date.strftime('%d %b %Y') }}</td></tr>
+</table>
+<p style="color:#3d3d3a; line-height:1.6;">Please complete the payment from your SmartCare X dashboard at your earliest convenience.</p>
+{% endblock %}

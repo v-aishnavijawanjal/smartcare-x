@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Generate Lab Report — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h1 class="fw-bold mb-4">Generate Lab Report</h1>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.patient_id.label(class="form-label fw-semibold") }}
+            {{ form.patient_id(class="form-select") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.title.label(class="form-label fw-semibold") }}
+            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+            {% for error in form.title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <h2 class="h6 fw-bold mb-3 mt-2">Test Parameters</h2>
+        <div id="itemsContainer">
+          {% for param in form.parameters %}
+            <div class="row g-2 align-items-end mb-2 item-row">
+              <div class="col-md-4">
+                {% if loop.first %}<label class="form-label small">Parameter</label>{% endif %}
+                {{ param.parameter_name(class="form-control", placeholder="e.g. Hemoglobin") }}
+              </div>
+              <div class="col-md-2">
+                {% if loop.first %}<label class="form-label small">Result</label>{% endif %}
+                {{ param.result_value(class="form-control", placeholder="13.8") }}
+              </div>
+              <div class="col-md-3">
+                {% if loop.first %}<label class="form-label small">Reference Range</label>{% endif %}
+                {{ param.reference_range(class="form-control", placeholder="13.0 - 17.0") }}
+              </div>
+              <div class="col-md-2">
+                {% if loop.first %}<label class="form-label small">Unit</label>{% endif %}
+                {{ param.unit_label(class="form-control", placeholder="g/dL") }}
+              </div>
+              <div class="col-md-1">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <button type="button" id="addRowBtn" class="btn btn-sm btn-outline-secondary mb-4">
+          <i class="bi bi-plus-circle me-1"></i>Add Another Parameter
+        </button>
+
+        <div id="rowTemplate" class="d-none">
+          <div class="row g-2 align-items-end mb-2 item-row">
+            <div class="col-md-4"><input type="text" class="form-control" name="parameters-__INDEX__-parameter_name" placeholder="e.g. Hemoglobin"></div>
+            <div class="col-md-2"><input type="text" class="form-control" name="parameters-__INDEX__-result_value" placeholder="13.8"></div>
+            <div class="col-md-3"><input type="text" class="form-control" name="parameters-__INDEX__-reference_range" placeholder="13.0 - 17.0"></div>
+            <div class="col-md-2"><input type="text" class="form-control" name="parameters-__INDEX__-unit_label" placeholder="g/dL"></div>
+            <div class="col-md-1"><button type="button" class="btn btn-outline-danger btn-sm remove-row-btn"><i class="bi bi-trash"></i></button></div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          {{ form.interpretation.label(class="form-label fw-semibold") }}
+          {{ form.interpretation(class="form-control", rows=3, placeholder="Overall interpretation or remarks (optional)") }}
+        </div>
+
+        {{ form.submit(class="btn", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('itemsContainer');
+  let nextIndex = {{ form.parameters | length }};
+
+  document.getElementById('addRowBtn').addEventListener('click', function () {
+    const templateHtml = document.getElementById('rowTemplate').innerHTML.replaceAll('__INDEX__', nextIndex);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = templateHtml.trim();
+    container.appendChild(wrapper.firstChild);
+    nextIndex += 1;
+  });
+
+  container.addEventListener('click', function (e) {
+    const btn = e.target.closest('.remove-row-btn');
+    if (btn) btn.closest('.item-row').remove();
+  });
+});
+</script>
+{% endblock %}

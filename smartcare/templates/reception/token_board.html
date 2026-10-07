@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Token Board — {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <h1 class="fw-bold mb-0">Today's Token Board</h1>
+  <form method="GET" class="d-flex gap-2">
+    <select name="doctor_id" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="">All Doctors</option>
+      {% for doc in doctors %}
+        <option value="{{ doc.id }}" {{ 'selected' if selected_doctor_id == doc.id }}>Dr. {{ doc.full_name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="row g-3">
+  {% for appt in appointments %}
+    <div class="col-md-4 col-lg-3">
+      <div class="card border-0 shadow-sm text-center p-3" style="border-radius: var(--sc-radius);">
+        <div class="display-6 fw-bold" style="color: var(--sc-cta);">#{{ appt.token_number }}</div>
+        <p class="fw-semibold mb-1">{{ appt.patient.full_name }}</p>
+        <p class="small text-muted mb-1">Dr. {{ appt.doctor.full_name }}</p>
+        <span class="badge align-self-center" style="background-color:
+          {% if appt.status.value == 'approved' %}var(--sc-success)
+          {% elif appt.status.value in ['cancelled', 'rejected'] %}#c0554b
+          {% elif appt.status.value == 'completed' %}var(--sc-primary)
+          {% else %}var(--sc-cta){% endif %};">
+          {{ appt.status.value.title() }}
+        </span>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-muted">No tokens issued yet today.</p>
+  {% endfor %}
+</div>
+{% endblock %}

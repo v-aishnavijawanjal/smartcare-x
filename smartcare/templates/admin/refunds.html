@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Refunds — {% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h1 class="fw-bold mb-1">Refunds</h1>
+  <p class="text-muted mb-0">Consultation fees awaiting refund after a cancelled or rejected appointment.</p>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: var(--sc-radius);">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Patient</th>
+          <th>Amount</th>
+          <th>Original Payment Date</th>
+          <th>Appointment</th>
+          <th class="text-end pe-4">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bill in pending_bills %}
+          <tr>
+            <td class="ps-4">{{ bill.patient.full_name }}</td>
+            <td>₹{{ '%.2f' | format(bill.total) }}</td>
+            <td class="small text-muted">{{ bill.created_at.strftime('%d %b %Y') }}</td>
+            <td class="small text-muted">
+              {% if bill.appointment %}
+                Dr. {{ bill.appointment.doctor.full_name }} — {{ bill.appointment.appointment_date.strftime('%d %b %Y') }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="text-end pe-4">
+              <form method="POST" action="{{ url_for('admin.mark_refunded', bill_id=bill.id) }}" class="d-inline"
+                    onsubmit="return confirm('Confirm that ₹{{ '%.2f' | format(bill.total) }} has actually been refunded to {{ bill.patient.full_name }}?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm" style="background-color: var(--sc-success);">
+                  <i class="bi bi-check2-circle me-1"></i>Mark as Refunded
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No refunds pending.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}My Profile — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">My Profile</h1>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:64px; height:64px; background-color: var(--sc-soft);">
+          <i class="bi bi-person-fill fs-3" style="color: var(--sc-dark);"></i>
+        </div>
+        <div>
+          <h2 class="h5 fw-bold mb-0">Dr. {{ doctor.full_name }}</h2>
+          <p class="small text-muted mb-0">{{ doctor.department.name }}</p>
+        </div>
+      </div>
+
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.specialization.label(class="form-label fw-semibold") }}
+            {{ form.specialization(class="form-control") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.qualification.label(class="form-label fw-semibold") }}
+            {{ form.qualification(class="form-control") }}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.experience_years.label(class="form-label fw-semibold") }}
+            {{ form.experience_years(class="form-control") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.consultation_fee.label(class="form-label fw-semibold") }}
+            {{ form.consultation_fee(class="form-control") }}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          {{ form.bio.label(class="form-label fw-semibold") }}
+          {{ form.bio(class="form-control", rows=4, placeholder="A short professional bio patients will see...") }}
+        </div>
+
+        {{ form.submit(class="btn", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

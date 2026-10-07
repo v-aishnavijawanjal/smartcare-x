@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Billing — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Billing</h1>
+
+{% if form and patient %}
+  <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--sc-radius);">
+    <h2 class="h6 fw-bold mb-3">New Bill for {{ patient.full_name }}</h2>
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div id="itemsContainer">
+        {% for item in form.items %}
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-6">
+              {% if loop.first %}<label class="form-label small">Description</label>{% endif %}
+              {{ item.item_description(class="form-control", placeholder="e.g. Consultation Fee") }}
+            </div>
+            <div class="col-md-2">
+              {% if loop.first %}<label class="form-label small">Qty</label>{% endif %}
+              {{ item.quantity(class="form-control") }}
+            </div>
+            <div class="col-md-3">
+              {% if loop.first %}<label class="form-label small">Unit Price</label>{% endif %}
+              {{ item.unit_price(class="form-control") }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {{ form.submit(class="btn mt-3", style="background-color: var(--sc-cta); color: #fff;") }}
+    </form>
+  </div>
+{% endif %}
+
+<div class="card border-0 shadow-sm" style="border-radius: var(--sc-radius);">
+  <div class="p-4 pb-0"><h2 class="h6 fw-bold mb-0">Unpaid / Partial Bills</h2></div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Patient</th>
+          <th>Total</th>
+          <th>Balance Due</th>
+          <th>Status</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bill in unpaid_bills %}
+          <tr>
+            <td class="ps-4">{{ bill.patient.full_name }}</td>
+            <td>₹{{ '%.2f' | format(bill.total) }}</td>
+            <td>₹{{ '%.2f' | format(bill.balance_due) }}</td>
+            <td><span class="badge" style="background-color: var(--sc-cta);">{{ bill.status.title() }}</span></td>
+            <td class="text-end pe-4">
+              <a href="{{ url_for('reception.download_receipt', bill_id=bill.id) }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-download"></i>
+              </a>
+              <button type="button" class="btn btn-sm" style="background-color: var(--sc-success);"
+                      data-bs-toggle="modal" data-bs-target="#payModal{{ bill.id }}">
+                Record Payment
+              </button>
+            </td>
+          </tr>
+
+          <div class="modal fade" id="payModal{{ bill.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content" style="border-radius: var(--sc-radius);">
+                <form method="POST" action="{{ url_for('reception.record_payment_route', bill_id=bill.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Record Payment — Bill #{{ bill.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label small">Amount</label>
+                      <input type="number" step="0.01" name="amount" class="form-control" value="{{ bill.balance_due }}" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small">Method</label>
+                      <select name="method" class="form-select">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="upi">UPI</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn" style="background-color: var(--sc-cta); color:#fff;">Confirm Payment</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No unpaid bills. Nice work!</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

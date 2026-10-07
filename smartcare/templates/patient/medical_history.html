@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Medical History — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Medical History</h1>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3"><i class="bi bi-file-earmark-medical me-2" style="color: var(--sc-primary);"></i>Prescriptions</h2>
+      {% if prescriptions %}
+        <ul class="list-unstyled mb-0">
+          {% for p in prescriptions %}
+            <li class="border-bottom pb-3 mb-3">
+              <div class="d-flex justify-content-between">
+                <strong>Dr. {{ p.doctor.full_name }}</strong>
+                <small class="text-muted">{{ p.created_at.strftime('%d %b %Y') }}</small>
+              </div>
+              {% if p.diagnosis %}<p class="small text-muted mb-1">Diagnosis: {{ p.diagnosis }}</p>{% endif %}
+              <p class="small mb-0">{{ p.items | length }} medicine(s) prescribed</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No prescriptions on record yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3"><i class="bi bi-clipboard2-pulse me-2" style="color: var(--sc-primary);"></i>Lab Reports</h2>
+      {% if reports %}
+        <ul class="list-unstyled mb-0">
+          {% for r in reports %}
+            <li class="border-bottom pb-3 mb-3">
+              <div class="d-flex justify-content-between">
+                <strong>{{ r.title }}</strong>
+                <small class="text-muted">{{ r.uploaded_at.strftime('%d %b %Y') }}</small>
+              </div>
+              <p class="small text-muted mb-0 text-capitalize">{{ r.report_type }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No lab reports uploaded yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

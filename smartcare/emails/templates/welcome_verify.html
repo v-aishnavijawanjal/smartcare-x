@@ -1,0 +1,21 @@
+{% extends "_base_email.html" %}
+{% block content %}
+<h2 style="color:#233D4C; margin-top:0;">Welcome, {{ full_name }}!</h2>
+<p style="color:#3d3d3a; line-height:1.6;">
+  Your SmartCare X account has been created. Please verify your email address to activate your account
+  and start booking appointments, viewing prescriptions, and managing your healthcare.
+</p>
+<p style="text-align:center; margin:28px 0;">
+  <a href="{{ verification_url }}"
+     style="background-color:#FD802E; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:6px; font-weight:bold; display:inline-block;">
+    Verify Email
+  </a>
+</p>
+<p style="color:#73726c; font-size:13px; line-height:1.6;">
+  This link expires in 24 hours. If the button doesn't work, copy and paste this URL into your browser:<br>
+  {{ verification_url }}
+</p>
+<p style="color:#3d3d3a; line-height:1.6; margin-top: 20px;">
+  If you did not create this account, please ignore this email.
+</p>
+{% endblock %}

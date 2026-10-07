@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Prescriptions — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Prescriptions</h1>
+
+<div class="row g-3">
+  {% for p in pagination.items %}
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--sc-radius);">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h2 class="h6 fw-bold mb-0">Dr. {{ p.doctor.full_name }}</h2>
+            <small class="text-muted">{{ p.created_at.strftime('%d %b %Y') }}</small>
+          </div>
+          <a href="{{ url_for('patient.download_prescription', prescription_id=p.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1"></i>PDF
+          </a>
+        </div>
+        {% if p.diagnosis %}<p class="small mb-2"><strong>Diagnosis:</strong> {{ p.diagnosis }}</p>{% endif %}
+        <ul class="small mb-0 ps-3">
+          {% for item in p.items %}
+            <li>{{ item.medicine.name }} — {{ item.dosage or '—' }}, {{ item.frequency or '—' }} ({{ item.duration_days }} day{{ 's' if item.duration_days != 1 }})</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-muted">No prescriptions yet.</p>
+  {% endfor %}
+</div>
+
+<div class="px-2">
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

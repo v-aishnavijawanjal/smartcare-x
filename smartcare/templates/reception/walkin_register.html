@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Register Walk-in Patient — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h1 class="fw-bold mb-4">Register Walk-in Patient</h1>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" id="walkinForm" novalidate>
+        {{ form.hidden_tag() }}
+
+        <h2 class="h6 fw-bold mb-3">Patient Details</h2>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.full_name.label(class="form-label fw-semibold") }}
+            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+            {% for error in form.full_name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.gender.label(class="form-label fw-semibold") }}
+            {{ form.gender(class="form-select") }}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            {{ form.email.label(class="form-label fw-semibold") }}
+            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+            {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6 mb-4">
+            {{ form.phone.label(class="form-label fw-semibold") }}
+            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+            {% for error in form.phone.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <h2 class="h6 fw-bold mb-3">Appointment</h2>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.department_id.label(class="form-label fw-semibold") }}
+            {{ form.department_id(class="form-select", id="departmentSelect") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.doctor_id.label(class="form-label fw-semibold") }}
+            {{ form.doctor_id(class="form-select", id="doctorSelect") }}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.appointment_date.label(class="form-label fw-semibold") }}
+            {{ form.appointment_date(class="form-control", id="dateInput") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.time_slot.label(class="form-label fw-semibold") }}
+            {{ form.time_slot(class="form-select", id="timeSlotSelect") }}
+          </div>
+        </div>
+        <div class="mb-4">
+          {{ form.reason.label(class="form-label fw-semibold") }}
+          {{ form.reason(class="form-control", rows=2) }}
+        </div>
+
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const deptSelect = document.getElementById('departmentSelect');
+  const doctorSelect = document.getElementById('doctorSelect');
+  const dateInput = document.getElementById('dateInput');
+  const timeSlotSelect = document.getElementById('timeSlotSelect');
+  const walkinForm = document.getElementById('walkinForm');
+
+  // Prevent selecting past dates.
+  if (dateInput) {
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
+
+  // Check if the selected slot has already passed.
+  function isSlotInPast(dateStr, slotLabel) {
+    if (!dateStr || !slotLabel) return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr < todayStr) return true;
+    if (dateStr > todayStr) return false;
+    const match = slotLabel.split(' - ')[0].trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return false;
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const period = match[3].toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    const slotDateTime = new Date();
+    slotDateTime.setHours(hours, minutes, 0, 0);
+    return slotDateTime <= new Date();
+  }
+
+  function refreshSlots() {
+    const doctorId = doctorSelect.value;
+    const date = dateInput.value;
+    if (!doctorId || !date) return;
+
+    fetch(`{{ url_for('reception.available_slots_api') }}?doctor_id=${doctorId}&date=${date}`)
+      .then(res => res.json())
+      .then(slots => {
+        timeSlotSelect.innerHTML = '';
+        if (slots.length === 0) {
+          timeSlotSelect.innerHTML = '<option value="">No slots available on this date</option>';
+          return;
+        }
+        slots.forEach(slot => {
+          const opt = document.createElement('option');
+          opt.value = slot;
+          opt.textContent = slot;
+          timeSlotSelect.appendChild(opt);
+        });
+      });
+  }
+
+  deptSelect.addEventListener('change', function () {
+    fetch(`{{ url_for('reception.doctors_by_department_api') }}?department_id=${deptSelect.value}`)
+      .then(res => res.json())
+      .then(doctors => {
+        doctorSelect.innerHTML = '';
+        doctors.forEach(doc => {
+          const opt = document.createElement('option');
+          opt.value = doc.id;
+          opt.textContent = doc.name;
+          doctorSelect.appendChild(opt);
+        });
+        refreshSlots();
+      });
+  });
+
+  doctorSelect.addEventListener('change', refreshSlots);
+  dateInput.addEventListener('change', refreshSlots);
+
+  if (walkinForm) {
+    walkinForm.addEventListener('submit', function (e) {
+      if (!timeSlotSelect.value) return; // Let required-field validation handle this.
+      if (isSlotInPast(dateInput.value, timeSlotSelect.value)) {
+        e.preventDefault();
+        alert('This date/time has already passed. Please choose a future slot.');
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

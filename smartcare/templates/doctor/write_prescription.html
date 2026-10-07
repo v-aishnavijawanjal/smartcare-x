@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Write Prescription — {% endblock %}
+
+{% block extra_css %}
+<style>
+  .medicine-field-wrapper { position: relative; }
+  .medicine-dropdown-list {
+    top: 100%;
+    left: 0;
+    z-index: 1050;
+    max-height: 220px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    margin-top: 2px;
+  }
+  .medicine-dropdown-list .list-group-item {
+    cursor: pointer;
+    border-left: none;
+    border-right: none;
+  }
+  .medicine-dropdown-list .list-group-item:hover {
+    background-color: var(--sc-soft);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h1 class="fw-bold">Write Prescription</h1>
+  <p class="text-muted mb-0">
+    Patient: <strong>{{ appointment.patient.full_name }}</strong> &middot;
+    {{ appointment.appointment_date.strftime('%d %b %Y') }} at {{ appointment.time_slot }}
+  </p>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+  <form method="POST" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+      {{ form.diagnosis.label(class="form-label fw-semibold") }}
+      {{ form.diagnosis(class="form-control", rows=2) }}
+    </div>
+    <div class="mb-4">
+      {{ form.notes.label(class="form-label fw-semibold") }}
+      {{ form.notes(class="form-control", rows=2) }}
+    </div>
+
+    <h2 class="h6 fw-bold mb-3">Medicines</h2>
+    <div id="itemsContainer">
+      {% for item in form.items %}
+        <div class="row g-2 align-items-start mb-2 item-row">
+          <div class="col-md-3">
+            {% if loop.first %}<label class="form-label small">Medicine</label>{% endif %}
+            <div class="medicine-field-wrapper">
+              {{ item.medicine_id(class="form-select d-none medicine-select") }}
+              <input type="text" class="form-control medicine-search-input" placeholder="Select Medicine..." autocomplete="off">
+              <div class="medicine-dropdown-list list-group position-absolute w-100 d-none"></div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            {% if loop.first %}<label class="form-label small">Dosage</label>{% endif %}
+            {{ item.dosage(class="form-select dosage-select") }}
+            {{ item.dosage_other(class="form-control mt-1 dosage-other d-none", placeholder="Specify dosage") }}
+          </div>
+          <div class="col-md-3">
+            {% if loop.first %}<label class="form-label small">Frequency</label>{% endif %}
+            {{ item.frequency(class="form-select frequency-select") }}
+            {{ item.frequency_other(class="form-control mt-1 frequency-other d-none", placeholder="Specify frequency") }}
+          </div>
+          <div class="col-md-2">
+            {% if loop.first %}<label class="form-label small">Duration (days)</label>{% endif %}
+            {{ item.duration_days(class="form-control") }}
+          </div>
+          <div class="col-md-1">
+            {% if loop.first %}<label class="form-label small">Qty</label>{% endif %}
+            {{ item.quantity_to_deduct(class="form-control") }}
+          </div>
+          <div class="col-md-1">
+            {% if loop.first %}<label class="form-label small d-block">&nbsp;</label>{% endif %}
+            <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <button type="button" id="addRowBtn" class="btn btn-sm btn-outline-secondary mb-4">
+      <i class="bi bi-plus-circle me-1"></i>Add Another Medicine
+    </button>
+
+    <div id="rowTemplate" class="d-none">
+      <div class="row g-2 align-items-start mb-2 item-row">
+        <div class="col-md-3">
+          <div class="medicine-field-wrapper">
+            <select class="form-select d-none medicine-select" name="items-__INDEX__-medicine_id" id="items-__INDEX__-medicine_id">
+              {% for value, label in form.items[0].medicine_id.choices %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" class="form-control medicine-search-input" placeholder="Select Medicine..." autocomplete="off">
+            <div class="medicine-dropdown-list list-group position-absolute w-100 d-none"></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select dosage-select" name="items-__INDEX__-dosage" id="items-__INDEX__-dosage">
+            {% for value, label in form.items[0].dosage.choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" class="form-control mt-1 dosage-other d-none" name="items-__INDEX__-dosage_other" placeholder="Specify dosage">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select frequency-select" name="items-__INDEX__-frequency" id="items-__INDEX__-frequency">
+            {% for value, label in form.items[0].frequency.choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" class="form-control mt-1 frequency-other d-none" name="items-__INDEX__-frequency_other" placeholder="Specify frequency">
+        </div>
+        <div class="col-md-2"><input type="number" class="form-control" name="items-__INDEX__-duration_days" value="1" min="1"></div>
+        <div class="col-md-1"><input type="number" class="form-control" name="items-__INDEX__-quantity_to_deduct" value="1" min="1"></div>
+        <div class="col-md-1"><button type="button" class="btn btn-outline-danger btn-sm remove-row-btn"><i class="bi bi-trash"></i></button></div>
+      </div>
+    </div>
+
+    {{ form.submit(class="btn", style="background-color: var(--sc-cta); color: #fff;") }}
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('itemsContainer');
+  let nextIndex = {{ form.items | length }};
+
+  function wireMedicineField(wrapper) {
+    if (wrapper.dataset.wired) return;
+    wrapper.dataset.wired = "true";
+
+    const select = wrapper.querySelector('.medicine-select');
+    const input = wrapper.querySelector('.medicine-search-input');
+    const list = wrapper.querySelector('.medicine-dropdown-list');
+
+    const options = Array.from(select.options).map(function (o) {
+      return { value: o.value, text: o.textContent };
+    });
+
+    // Only pre-fill the visible input if a REAL medicine (value != "0") is
+    // already selected on the underlying <select> — otherwise leave it
+    // empty so the "Select Medicine..." placeholder shows through.
+    const initial = options.find(function (o) { return o.value === select.value; });
+    if (initial && initial.value !== "0") {
+      input.value = initial.text;
+    } else {
+      select.value = "0";
+      input.value = "";
+    }
+
+    function selectOption(opt) {
+      select.value = opt.value;
+      input.value = opt.value === "0" ? "" : opt.text;
+      list.classList.add('d-none');
+    }
+
+    function renderList(filterText) {
+      const term = filterText.trim().toLowerCase();
+      // The placeholder option itself never appears in the searchable list.
+      const searchable = options.filter(function (o) { return o.value !== "0"; });
+      const filtered = term ? searchable.filter(function (o) { return o.text.toLowerCase().includes(term); }) : searchable;
+      list.innerHTML = '';
+
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'list-group-item small text-muted';
+        empty.textContent = 'No medicines found';
+        list.appendChild(empty);
+      } else {
+        filtered.forEach(function (opt) {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'list-group-item list-group-item-action small';
+          item.textContent = opt.text;
+          // mousedown fires before the input's blur event, so the click
+          // registers before the dropdown gets hidden by blur.
+          item.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            selectOption(opt);
+          });
+          list.appendChild(item);
+        });
+      }
+      list.classList.remove('d-none');
+    }
+
+    input.addEventListener('focus', function () { renderList(''); });
+    input.addEventListener('input', function () { renderList(input.value); });
+    input.addEventListener('blur', function () {
+      setTimeout(function () { list.classList.add('d-none'); }, 100);
+    });
+  }
+
+  function wireOtherToggle(selectEl, otherSelector) {
+    const row = selectEl.closest('.item-row');
+    const otherInput = row.querySelector(otherSelector);
+    if (!otherInput) return;
+    function sync() {
+      otherInput.classList.toggle('d-none', selectEl.value !== 'other');
+    }
+    selectEl.addEventListener('change', sync);
+    sync();
+  }
+
+  function wireRow(row) {
+    const medicineWrapper = row.querySelector('.medicine-field-wrapper');
+    const dosageSelect = row.querySelector('.dosage-select');
+    const frequencySelect = row.querySelector('.frequency-select');
+    if (medicineWrapper) wireMedicineField(medicineWrapper);
+    if (dosageSelect) wireOtherToggle(dosageSelect, '.dosage-other');
+    if (frequencySelect) wireOtherToggle(frequencySelect, '.frequency-other');
+  }
+
+  container.querySelectorAll('.item-row').forEach(wireRow);
+
+  document.getElementById('addRowBtn').addEventListener('click', function () {
+    const templateHtml = document.getElementById('rowTemplate').innerHTML.replaceAll('__INDEX__', nextIndex);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = templateHtml.trim();
+    const newRow = wrapper.firstChild;
+    container.appendChild(newRow);
+    wireRow(newRow);
+    nextIndex += 1;
+  });
+
+  container.addEventListener('click', function (e) {
+    const btn = e.target.closest('.remove-row-btn');
+    if (btn) btn.closest('.item-row').remove();
+  });
+});
+</script>
+{% endblock %}

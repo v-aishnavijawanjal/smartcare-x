@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}SmartCare X{% endblock %}Healthcare That Puts You First</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_css %}{% endblock %}
+
+<style>
+  :root {
+    --sc-primary: #789A99;
+    --sc-primary-dark: #5f8180;
+    --sc-dark: #233D4C;
+    --sc-soft: #FFD2C2;
+    --sc-success: #ACC8A2;
+    --sc-cta: #FD802E;
+    --sc-bg: #F7F8F8;
+    --sc-radius: 14px;
+  }
+  body { font-family: 'Inter', sans-serif; background-color: var(--sc-bg); color: var(--sc-dark); overflow-x: hidden; }
+</style>
+</head>
+<body>
+
+{% include "partials/_navbar.html" %}
+
+<main>
+  <div class="container-fluid px-3 px-md-4 py-4">
+    {% include "partials/_flash.html" %}
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<footer class="mt-5 py-4" style="background-color: var(--sc-dark); color: #ffffff;">
+  <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+    <span>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</span>
+    <span class="small opacity-75">Intelligent Healthcare Management Platform</span>
+  </div>
+</footer>
+
+{% include "partials/_toast.html" %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

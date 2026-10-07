@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <h1 class="fw-bold mb-0">Admin Dashboard</h1>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <div class="card border-0 shadow-sm p-3 text-center" style="border-radius: var(--sc-radius); background-color: var(--sc-soft);">
+      <i class="bi bi-people-fill fs-3 mb-1" style="color: var(--sc-dark);"></i>
+      <div class="fs-5 fw-bold" style="color: var(--sc-dark);">{{ kpis.total_patients }}</div>
+      <small style="color: var(--sc-dark);">Patients</small>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card border-0 shadow-sm p-3 text-center" style="border-radius: var(--sc-radius);">
+      <i class="bi bi-person-badge fs-3 mb-1" style="color: var(--sc-primary);"></i>
+      <div class="fs-5 fw-bold">{{ kpis.total_doctors }}</div>
+      <small class="text-muted">Doctors</small>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card border-0 shadow-sm p-3 text-center" style="border-radius: var(--sc-radius);">
+      <i class="bi bi-calendar-check fs-3 mb-1" style="color: var(--sc-primary);"></i>
+      <div class="fs-5 fw-bold">{{ kpis.total_appointments }}</div>
+      <small class="text-muted">Appointments</small>
+    </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card border-0 shadow-sm p-3 text-center" style="border-radius: var(--sc-radius);">
+      <i class="bi bi-diagram-3 fs-3 mb-1" style="color: var(--sc-primary);"></i>
+      <div class="fs-5 fw-bold">{{ kpis.total_departments }}</div>
+      <small class="text-muted">Departments</small>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card border-0 shadow-sm p-3 text-center" style="border-radius: var(--sc-radius); background-color: var(--sc-dark); color: #fff;">
+      <i class="bi bi-cash-coin fs-3 mb-1"></i>
+      <div class="fs-5 fw-bold">₹{{ '%.2f' | format(kpis.total_revenue) }}</div>
+      <small class="opacity-75">Total Revenue</small>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Appointments — Last 14 Days</h2>
+      <canvas id="appointmentsChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Revenue — Last 6 Months</h2>
+      <canvas id="revenueChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Appointment Status Breakdown</h2>
+      <canvas id="statusChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Doctors by Department</h2>
+      <canvas id="departmentChart" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill" style="color: var(--sc-cta);"></i>
+    <h2 class="h6 fw-bold mb-0">Low Stock Alerts</h2>
+    <a href="{{ url_for('admin.manage_medicines') }}" class="badge text-decoration-none ms-auto"
+       style="background-color: var(--sc-soft); color: var(--sc-dark); font-weight: 500;">
+      Manage Medicines <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+  </div>
+  {% if low_stock_items %}
+    <ul class="list-unstyled mb-0">
+      {% for item in low_stock_items %}
+        <li class="d-flex justify-content-between border-bottom py-2">
+          <span class="small">{{ item.medicine.name }}</span>
+          <span class="small text-danger fw-semibold">{{ item.quantity_in_stock }} left (reorder at {{ item.reorder_level }})</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-center py-4">
+      <i class="bi bi-check-circle fs-3 d-block mb-2" style="color: var(--sc-success);"></i>
+      <p class="text-muted small mb-0">All medicines are well-stocked.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const scColors = { primary: '#789A99', dark: '#233D4C', soft: '#FFD2C2', success: '#ACC8A2', cta: '#FD802E' };
+
+  new Chart(document.getElementById('appointmentsChart'), {
+    type: 'line',
+    data: {
+      labels: {{ appointments_chart.labels | tojson }},
+      datasets: [{ label: 'Appointments', data: {{ appointments_chart.data | tojson }}, borderColor: scColors.primary, backgroundColor: scColors.primary + '33', fill: true, tension: 0.3 }]
+    },
+    options: { plugins: { legend: { display: false } } }
+  });
+
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ revenue_chart.labels | tojson }},
+      datasets: [{ label: 'Revenue (₹)', data: {{ revenue_chart.data | tojson }}, backgroundColor: scColors.cta }]
+    },
+    options: { plugins: { legend: { display: false } } }
+  });
+
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ status_chart.labels | tojson }},
+      datasets: [{ data: {{ status_chart.data | tojson }}, backgroundColor: [scColors.cta, scColors.success, '#c0554b', scColors.primary, scColors.dark, scColors.soft] }]
+    }
+  });
+
+  new Chart(document.getElementById('departmentChart'), {
+    type: 'pie',
+    data: {
+      labels: {{ department_chart.labels | tojson }},
+      datasets: [{ data: {{ department_chart.data | tojson }}, backgroundColor: [scColors.primary, scColors.cta, scColors.success, scColors.dark, scColors.soft, '#5f8180'] }]
+    }
+  });
+</script>
+{% endblock %}

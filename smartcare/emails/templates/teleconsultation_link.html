@@ -1,0 +1,14 @@
+{% extends "_base_email.html" %}
+{% block content %}
+<h2 style="color:#233D4C; margin-top:0;">Your Video Consultation is Confirmed</h2>
+<p style="color:#3d3d3a; line-height:1.6;">Hi {{ full_name }}, your online appointment with Dr. {{ doctor_name }} has been approved.</p>
+<table role="presentation" width="100%" cellpadding="8" style="background-color:#FFD2C2; border-radius:8px; margin:16px 0;">
+  <tr><td style="color:#233D4C; font-weight:bold;">Date</td><td style="color:#233D4C;">{{ appointment_date.strftime('%d %b %Y') }}</td></tr>
+  <tr><td style="color:#233D4C; font-weight:bold;">Time</td><td style="color:#233D4C;">{{ time_slot }}</td></tr>
+</table>
+<p style="color:#3d3d3a; line-height:1.6;">Join the video call using the button below at your scheduled time. No app install or account needed.</p>
+<p style="text-align:center; margin:24px 0;">
+  <a href="{{ meeting_link }}" style="background-color:#FD802E; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-block;">Join Video Call</a>
+</p>
+<p style="color:#3d3d3a; line-height:1.6; font-size:13px;">Or copy this link into your browser: {{ meeting_link }}</p>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}About — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+
+    <section class="rounded-4 p-4 p-md-5 mb-4 text-white" style="background-color: var(--sc-dark);">
+      <h1 class="fw-bold mb-2">About SmartCare X</h1>
+      <p class="opacity-75 mb-0">Built to make hospital operations simple, connected, and human.</p>
+    </section>
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm text-center p-3" style="border-radius: var(--sc-radius);">
+          <i class="bi bi-people-fill fs-1 mb-2" style="color: var(--sc-primary);"></i>
+          <h3 class="h6 fw-bold">Patient-first</h3>
+          <p class="small text-muted mb-0">Booking, prescriptions, and reports — all in one place, with no back-and-forth phone calls.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm text-center p-3" style="border-radius: var(--sc-radius);">
+          <i class="bi bi-clipboard2-pulse-fill fs-1 mb-2" style="color: var(--sc-primary);"></i>
+          <h3 class="h6 fw-bold">Built for clinicians</h3>
+          <p class="small text-muted mb-0">Doctors manage their queue, write prescriptions, and track patient history without the paperwork.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm text-center p-3" style="border-radius: var(--sc-radius);">
+          <i class="bi bi-graph-up-arrow fs-1 mb-2" style="color: var(--sc-primary);"></i>
+          <h3 class="h6 fw-bold">Run by data</h3>
+          <p class="small text-muted mb-0">Admins get real-time analytics on revenue, appointments, and inventory to run the hospital smoothly.</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h5 fw-bold mb-3">Our Mission</h2>
+      <p class="text-muted mb-0">
+        SmartCare X was created to remove the friction between patients and the care they need. From booking an
+        appointment to picking up a prescription, every step is designed to be fast, transparent, and stress-free —
+        for patients, doctors, receptionists, and administrators alike.
+      </p>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

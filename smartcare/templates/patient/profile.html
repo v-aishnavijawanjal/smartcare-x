@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}My Profile — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">My Profile</h1>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <img id="photoPreview"
+               src="{{ url_for('static', filename='uploads/profile_photos/' ~ current_user.profile_photo) if current_user.profile_photo != 'default_avatar.png' else url_for('static', filename='img/default_avatar.png') }}"
+               class="rounded-circle" width="72" height="72" style="object-fit:cover;" alt="Profile photo">
+          <div class="flex-grow-1">
+            {{ form.profile_photo.label(class="form-label fw-semibold") }}
+            {{ form.profile_photo(class="form-control" + (" is-invalid" if form.profile_photo.errors else ""), id="photoInput") }}
+            {% for error in form.profile_photo.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.full_name.label(class="form-label fw-semibold") }}
+            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+            {% for error in form.full_name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.phone.label(class="form-label fw-semibold") }}
+            {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+            {% for error in form.phone.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            {{ form.date_of_birth.label(class="form-label fw-semibold") }}
+            {{ form.date_of_birth(class="form-control") }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.gender.label(class="form-label fw-semibold") }}
+            {{ form.gender(class="form-select") }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.blood_group.label(class="form-label fw-semibold") }}
+            {{ form.blood_group(class="form-select") }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          {{ form.address.label(class="form-label fw-semibold") }}
+          {{ form.address(class="form-control", rows=2) }}
+        </div>
+
+        <div class="mb-4">
+          {{ form.emergency_contact.label(class="form-label fw-semibold") }}
+          {{ form.emergency_contact(class="form-control" + (" is-invalid" if form.emergency_contact.errors else "")) }}
+          {% for error in form.emergency_contact.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        {{ form.submit(class="btn", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('photoInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('photoPreview').src = URL.createObjectURL(file);
+  });
+</script>
+{% endblock %}

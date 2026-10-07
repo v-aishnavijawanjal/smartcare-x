@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Manage Appointments — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Manage Appointments</h1>
+
+<div class="card border-0 shadow-sm" style="border-radius: var(--sc-radius);">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Patient</th>
+          <th>Doctor</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in pagination.items %}
+          <tr>
+            <td class="ps-4">{{ appt.patient.full_name }}</td>
+            <td>Dr. {{ appt.doctor.full_name }}</td>
+            <td>{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
+            <td>{{ appt.time_slot }}</td>
+            <td>
+              <span class="badge" style="background-color:
+                {% if appt.status.value == 'approved' %}var(--sc-success)
+                {% elif appt.status.value in ['cancelled', 'rejected'] %}#c0554b
+                {% elif appt.status.value == 'completed' %}var(--sc-primary)
+                {% else %}var(--sc-cta){% endif %};">
+                {{ appt.status.value.title() }}
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              {% if appt.status.value in ['pending', 'approved'] %}
+                <form method="POST" action="{{ url_for('reception.cancel_appointment_route', appointment_id=appt.id) }}"
+                      class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">Cancel</button>
+                </form>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No appointments found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="px-2">
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

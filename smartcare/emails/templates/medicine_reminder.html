@@ -1,0 +1,11 @@
+{% extends "_base_email.html" %}
+{% block content %}
+<h2 style="color:#233D4C; margin-top:0;">Medicine Reminder</h2>
+<p style="color:#3d3d3a; line-height:1.6;">Hi {{ full_name }}, this is a reminder to take your medicine:</p>
+<table role="presentation" width="100%" cellpadding="8" style="background-color:#ACC8A2; border-radius:8px; margin:16px 0;">
+  <tr><td style="color:#233D4C; font-weight:bold;">Medicine</td><td style="color:#233D4C;">{{ medicine_name }}</td></tr>
+  <tr><td style="color:#233D4C; font-weight:bold;">Dosage</td><td style="color:#233D4C;">{{ dosage }}</td></tr>
+  <tr><td style="color:#233D4C; font-weight:bold;">Time</td><td style="color:#233D4C;">{{ reminder_time }}</td></tr>
+</table>
+<p style="color:#3d3d3a; line-height:1.6;">Staying on schedule helps your treatment work as intended.</p>
+{% endblock %}

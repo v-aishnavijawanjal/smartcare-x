@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Reschedule Appointment' if reschedule else 'Book Appointment' }} — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <div class="mb-4">
+      <h1 class="fw-bold">{{ 'Reschedule Appointment' if reschedule else 'Book an Appointment' }}</h1>
+      <p class="text-muted">
+        {% if reschedule %}
+          Currently: Dr. {{ appointment.doctor.full_name }} on {{ appointment.appointment_date.strftime('%d %b %Y') }} at {{ appointment.time_slot }}
+        {% else %}
+          Choose a department, doctor, and a time that works for you.
+        {% endif %}
+      </p>
+    </div>
+
+    {% if not reschedule %}
+    <div class="card border-0 shadow-sm p-4 mb-3" style="border-radius: var(--sc-radius); background-color: var(--sc-soft);">
+      <label class="form-label fw-semibold" style="color: var(--sc-dark);">
+        <i class="bi bi-stars me-1"></i>Not sure which department? Describe your symptoms
+      </label>
+      <div class="input-group">
+        <input type="text" id="symptomInput" class="form-control" placeholder="e.g. chest pain, headache, skin rash...">
+        <button type="button" id="suggestBtn" class="btn" style="background-color: var(--sc-dark); color:#fff;">
+          <i class="bi bi-search me-1"></i>Suggest
+        </button>
+      </div>
+      <div id="suggestionResult" class="small mt-2" style="color: var(--sc-dark);"></div>
+    </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" id="bookingForm" novalidate>
+        {{ form.hidden_tag() }}
+
+        {% if not reschedule %}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.department_id.label(class="form-label fw-semibold") }}
+            {{ form.department_id(class="form-select", id="departmentSelect") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.doctor_id.label(class="form-label fw-semibold") }}
+            {{ form.doctor_id(class="form-select", id="doctorSelect") }}
+            <div class="form-text" id="feeDisplay"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          {{ form.consultation_type.label(class="form-label fw-semibold") }}
+          {{ form.consultation_type(class="form-select", id="consultationTypeSelect") }}
+          <div class="form-text">
+            <i class="bi bi-camera-video me-1"></i>Online = a free video call link is sent once the doctor approves.
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.appointment_date.label(class="form-label fw-semibold") }}
+            {{ form.appointment_date(class="form-control", id="dateInput") }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.time_slot.label(class="form-label fw-semibold") }}
+            {{ form.time_slot(class="form-select", id="timeSlotSelect") }}
+            <div class="form-text">Select a doctor and date to see open slots.</div>
+          </div>
+        </div>
+
+        {% if not reschedule %}
+        <div class="mb-4">
+          {{ form.reason.label(class="form-label fw-semibold") }}
+          {{ form.reason(class="form-control", rows=3, placeholder="Briefly describe your symptoms or reason for visit (optional)") }}
+        </div>
+
+        <input type="hidden" id="razorpay_order_id" name="razorpay_order_id">
+        <input type="hidden" id="razorpay_payment_id" name="razorpay_payment_id">
+        <input type="hidden" id="razorpay_signature" name="razorpay_signature">
+
+        <button type="submit" class="btn w-100" id="payBtn" style="background-color: var(--sc-cta); color: #fff;">
+          <i class="bi bi-credit-card me-1"></i> Pay &amp; Book Appointment
+        </button>
+        {% else %}
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+        {% endif %}
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const deptSelect = document.getElementById('departmentSelect');
+  const doctorSelect = document.getElementById('doctorSelect');
+  const dateInput = document.getElementById('dateInput');
+  const timeSlotSelect = document.getElementById('timeSlotSelect');
+  const feeDisplay = document.getElementById('feeDisplay');
+  const bookingForm = document.getElementById('bookingForm');
+  const symptomInput = document.getElementById('symptomInput');
+  const suggestBtn = document.getElementById('suggestBtn');
+  const suggestionResult = document.getElementById('suggestionResult');
+  let doctorFees = {};
+  let paymentVerified = false;
+
+  // Stops the browser's date picker from offering past dates at all.
+  if (dateInput) {
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
+
+  // Client-side mirror of appointment_service.is_slot_in_past().
+  function isSlotInPast(dateStr, slotLabel) {
+    if (!dateStr || !slotLabel) return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr < todayStr) return true;
+    if (dateStr > todayStr) return false;
+    const match = slotLabel.split(' - ')[0].trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return false;
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const period = match[3].toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    const slotDateTime = new Date();
+    slotDateTime.setHours(hours, minutes, 0, 0);
+    return slotDateTime <= new Date();
+  }
+
+  function updateFeeDisplay() {
+    if (!feeDisplay || !doctorSelect) return;
+    const fee = doctorFees[doctorSelect.value];
+    feeDisplay.textContent = fee ? `Consultation Fee: ₹${fee}` : '';
+  }
+
+  function refreshSlots() {
+    const doctorId = doctorSelect ? doctorSelect.value : "{{ appointment.doctor_id if appointment else '' }}";
+    const date = dateInput.value;
+    if (!doctorId || !date) return;
+
+    fetch(`{{ url_for('patient.available_slots_api') }}?doctor_id=${doctorId}&date=${date}`)
+      .then(res => res.json())
+      .then(slots => {
+        timeSlotSelect.innerHTML = '';
+        if (slots.length === 0) {
+          timeSlotSelect.innerHTML = '<option value="">No slots available on this date</option>';
+          return;
+        }
+        slots.forEach(slot => {
+          const opt = document.createElement('option');
+          opt.value = slot;
+          opt.textContent = slot;
+          timeSlotSelect.appendChild(opt);
+        });
+      });
+  }
+
+  function loadDoctorsForDepartment(departmentId, onDone) {
+    fetch(`{{ url_for('patient.doctors_by_department_api') }}?department_id=${departmentId}`)
+      .then(res => res.json())
+      .then(doctors => {
+        doctorSelect.innerHTML = '';
+        doctorFees = {};
+        doctors.forEach(doc => {
+          const opt = document.createElement('option');
+          opt.value = doc.id;
+          opt.textContent = doc.name;
+          doctorSelect.appendChild(opt);
+          doctorFees[doc.id] = doc.fee;
+        });
+        updateFeeDisplay();
+        refreshSlots();
+        if (onDone) onDone();
+      });
+  }
+
+  if (deptSelect) {
+    deptSelect.addEventListener('change', function () {
+      loadDoctorsForDepartment(deptSelect.value);
+    });
+    doctorSelect.addEventListener('change', function () {
+      updateFeeDisplay();
+      refreshSlots();
+    });
+  }
+
+  if (dateInput) dateInput.addEventListener('change', refreshSlots);
+
+  if (suggestBtn) {
+    suggestBtn.addEventListener('click', function () {
+      const symptoms = symptomInput.value.trim();
+      if (!symptoms) {
+        suggestionResult.textContent = 'Please describe your symptoms first.';
+        return;
+      }
+      suggestionResult.innerHTML = '<i class="bi bi-hourglass-split"></i> Checking...';
+
+      fetch(`{{ url_for('patient.suggest_department_api') }}?symptoms=${encodeURIComponent(symptoms)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.matched) {
+            suggestionResult.innerHTML = 'Couldn\'t find a specific match — please choose a department manually below.';
+            return;
+          }
+          deptSelect.value = data.department_id;
+          loadDoctorsForDepartment(data.department_id);
+          suggestionResult.innerHTML = `<i class="bi bi-check-circle-fill" style="color: var(--sc-success);"></i> Based on your symptoms, we suggest <strong>${data.department_name}</strong> — selected below.`;
+        });
+    });
+  }
+
+  if (bookingForm && {{ 'false' if reschedule else 'true' }}) {
+    bookingForm.addEventListener('submit', function (e) {
+      if (paymentVerified) return; // fields already filled after successful payment
+
+      e.preventDefault();
+
+      // app.js's global spinner listener runs BEFORE this handler (it was
+      // attached first on page load) and shows the full-page overlay on
+      // every submit before it can see preventDefault(). Hide it right
+      // away so the user isn't stuck staring at a spinner — including if
+      // they close the Razorpay modal without paying.
+      const spinnerOverlay = document.querySelector('.sc-spinner-overlay');
+      if (spinnerOverlay) spinnerOverlay.classList.remove('active');
+
+      if (!doctorSelect.value) { alert('Please select a doctor.'); return; }
+      if (!timeSlotSelect.value) { alert('Please select a time slot.'); return; }
+      if (isSlotInPast(dateInput.value, timeSlotSelect.value)) {
+        alert('This date/time has already passed. Please choose a future slot.');
+        return;
+      }
+
+      const payBtn = document.getElementById('payBtn');
+      payBtn.disabled = true;
+      payBtn.textContent = 'Processing...';
+
+      fetch(`{{ url_for('patient.create_payment_order') }}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: `doctor_id=${doctorSelect.value}&appointment_date=${dateInput.value}&time_slot=${encodeURIComponent(timeSlotSelect.value)}`
+      })
+        .then(res => res.json())
+        .then(order => {
+          if (order.error) {
+            alert(order.error);
+            payBtn.disabled = false;
+            payBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay &amp; Book Appointment';
+            return;
+          }
+          const options = {
+            key: order.key,
+            amount: order.amount,
+            currency: order.currency,
+            name: 'SmartCare X',
+            description: `Consultation with Dr. ${order.doctor_name}`,
+            order_id: order.order_id,
+            prefill: {
+              name: order.patient_name,
+              email: order.patient_email,
+              contact: order.patient_phone
+            },
+            theme: { color: '#FD802E' },
+            handler: function (response) {
+              document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+              document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+              document.getElementById('razorpay_signature').value = response.razorpay_signature;
+              paymentVerified = true;
+              bookingForm.submit();
+            },
+            modal: {
+              ondismiss: function () {
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay &amp; Book Appointment';
+                if (spinnerOverlay) spinnerOverlay.classList.remove('active');
+              }
+            }
+          };
+          const rzp = new Razorpay(options);
+          rzp.open();
+        });
+    });
+  }
+});
+</script>
+{% endblock %}

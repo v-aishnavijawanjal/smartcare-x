@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Search Everything — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Search Everything</h1>
+
+<form method="GET" class="mb-4">
+  <div class="input-group" style="max-width: 480px;">
+    <input type="text" name="q" value="{{ term }}" class="form-control" placeholder="Search patients, doctors, medicines, appointments...">
+    <button class="btn" style="background-color: var(--sc-cta); color:#fff;" type="submit">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+</form>
+
+{% if results %}
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-people me-2" style="color: var(--sc-primary);"></i>Patients</h2>
+        {% for p in results.patients %}
+          <p class="small border-bottom py-1 mb-0">{{ p.full_name }} — {{ p.user.email }}</p>
+        {% else %}
+          <p class="text-muted small mb-0">No matches.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-person-badge me-2" style="color: var(--sc-primary);"></i>Doctors</h2>
+        {% for d in results.doctors %}
+          <p class="small border-bottom py-1 mb-0">Dr. {{ d.full_name }} — {{ d.specialization or d.department.name }}</p>
+        {% else %}
+          <p class="text-muted small mb-0">No matches.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-capsule me-2" style="color: var(--sc-primary);"></i>Medicines</h2>
+        {% for m in results.medicines %}
+          <p class="small border-bottom py-1 mb-0">{{ m.name }} — ₹{{ '%.2f' | format(m.unit_price) }}</p>
+        {% else %}
+          <p class="text-muted small mb-0">No matches.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-calendar-check me-2" style="color: var(--sc-primary);"></i>Appointments</h2>
+        {% for a in results.appointments %}
+          <p class="small border-bottom py-1 mb-0">{{ a.patient.full_name }} with Dr. {{ a.doctor.full_name }} — {{ a.appointment_date.strftime('%d %b %Y') }}</p>
+        {% else %}
+          <p class="text-muted small mb-0">No matches.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% elif term %}
+  <p class="text-muted">No results found for "{{ term }}".</p>
+{% endif %}
+{% endblock %}

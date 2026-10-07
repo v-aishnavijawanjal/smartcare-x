@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <div>
+    <h1 class="fw-bold mb-1">Welcome, Dr. {{ current_user.full_name.split(' ')[0] }}</h1>
+    <p class="text-muted mb-0">Here's your schedule for today.</p>
+  </div>
+  <a href="{{ url_for('doctor.availability') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-clock-history me-1"></i> Manage Availability
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm p-3" style="border-radius: var(--sc-radius); background-color: var(--sc-soft);">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-calendar-day fs-2" style="color: var(--sc-dark);"></i>
+        <div>
+          <div class="fs-4 fw-bold" style="color: var(--sc-dark);">{{ todays_appointments | length }}</div>
+          <small style="color: var(--sc-dark);">Appointments Today</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm p-3" style="border-radius: var(--sc-radius); background-color: #eef3f2;">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-hourglass-split fs-2" style="color: var(--sc-cta);"></i>
+        <div>
+          <div class="fs-4 fw-bold">{{ pending_count }}</div>
+          <small class="text-muted">Pending Approvals</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: var(--sc-radius);">
+  <div class="d-flex justify-content-between align-items-center p-4 pb-0">
+    <h2 class="h6 fw-bold mb-0">Today's Appointments</h2>
+    <a href="{{ url_for('doctor.today_appointments') }}" class="btn btn-sm btn-outline-secondary">
+      View all <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th class="ps-4">Patient</th><th>Time</th><th>Type</th><th>Status</th><th class="text-end pe-4">Actions</th></tr></thead>
+      <tbody>
+        {% for appt in todays_appointments %}
+          <tr>
+            <td class="ps-4">{{ appt.patient.full_name }}</td>
+            <td>{{ appt.time_slot }}</td>
+            <td>
+              {% if appt.consultation_type == 'online' %}
+                <span class="badge bg-info text-dark"><i class="bi bi-camera-video me-1"></i>Online</span>
+              {% else %}
+                <span class="badge bg-secondary">In-Person</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge" style="background-color:
+                {% if appt.status.value == 'approved' %}var(--sc-success)
+                {% elif appt.status.value in ['cancelled', 'rejected'] %}#c0554b
+                {% elif appt.status.value == 'completed' %}var(--sc-primary)
+                {% else %}var(--sc-cta){% endif %};">
+                {{ appt.status.value.title() }}
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              {% if appt.status.value == 'pending' %}
+                <form method="POST" action="{{ url_for('doctor.approve', appointment_id=appt.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm" style="background-color: var(--sc-success);">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('doctor.reject', appointment_id=appt.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">Reject</button>
+                </form>
+              {% elif appt.status.value == 'approved' %}
+                {% if appt.consultation_type == 'online' and appt.meeting_link %}
+                  <a href="{{ appt.meeting_link }}" target="_blank" rel="noopener" class="btn btn-sm" style="background-color: var(--sc-cta); color:#fff;">
+                    <i class="bi bi-camera-video-fill me-1"></i>Join Call
+                  </a>
+                {% endif %}
+                {% if appt.prescription %}
+                  <span class="badge bg-secondary"><i class="bi bi-check-circle me-1"></i>Prescription Sent</span>
+                {% else %}
+                  <a href="{{ url_for('doctor.write_prescription', appointment_id=appt.id) }}" class="btn btn-sm btn-outline-secondary">Write Prescription</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('doctor.complete', appointment_id=appt.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm" style="background-color: var(--sc-primary); color:#fff;">Mark Completed</button>
+                </form>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No appointments scheduled for today.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Appointment History — {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <h1 class="fw-bold mb-0">Appointment History</h1>
+  <a href="{{ url_for('patient.book') }}" class="btn" style="background-color: var(--sc-cta); color:#fff;">
+    <i class="bi bi-calendar-plus me-1"></i> Book New
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: var(--sc-radius);">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Doctor</th>
+          <th>Department</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in pagination.items %}
+          <tr>
+            <td class="ps-4">Dr. {{ appt.doctor.full_name }}</td>
+            <td>{{ appt.department.name }}</td>
+            <td>
+              {% if appt.consultation_type == 'online' %}
+                <span class="badge bg-info text-dark"><i class="bi bi-camera-video me-1"></i>Online</span>
+              {% else %}
+                <span class="badge bg-secondary">In-Person</span>
+              {% endif %}
+            </td>
+            <td>{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
+            <td>{{ appt.time_slot }}</td>
+            <td>
+              <span class="badge" style="background-color:
+                {% if appt.status.value == 'approved' %}var(--sc-success)
+                {% elif appt.status.value in ['cancelled', 'rejected'] %}#c0554b
+                {% elif appt.status.value == 'completed' %}var(--sc-primary)
+                {% else %}var(--sc-cta){% endif %};">
+                {{ appt.status.value.title() }}
+              </span>
+            </td>
+            <td class="text-end pe-4">
+              {% if appt.consultation_type == 'online' and appt.status.value == 'approved' and appt.meeting_link %}
+                <a href="{{ appt.meeting_link }}" target="_blank" rel="noopener" class="btn btn-sm" style="background-color: var(--sc-cta); color:#fff;">
+                  <i class="bi bi-camera-video-fill me-1"></i>Join Video Call
+                </a>
+              {% endif %}
+              {% if appt.status.value in ['pending', 'approved'] %}
+                <a href="{{ url_for('patient.reschedule', appointment_id=appt.id) }}" class="btn btn-sm btn-outline-secondary">Reschedule</a>
+                <form method="POST" action="{{ url_for('patient.cancel', appointment_id=appt.id) }}" class="d-inline"
+                      onsubmit="return confirm('Cancel this appointment?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                </form>
+              {% elif appt.consultation_type != 'online' or not appt.meeting_link %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No appointments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="px-2">
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

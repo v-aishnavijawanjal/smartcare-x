@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Patient Records' if single_patient else 'Search Patients' }} — {% endblock %}
+
+{% block content %}
+
+{% if not single_patient %}
+  <h1 class="fw-bold mb-4">Search Patients</h1>
+  <form method="GET" class="mb-4">
+    <div class="input-group" style="max-width: 480px;">
+      <input type="text" name="q" value="{{ term }}" class="form-control" placeholder="Search by name, email, or phone...">
+      <button class="btn" style="background-color: var(--sc-cta); color:#fff;" type="submit">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </form>
+
+  {% if not term %}
+    <div class="card border-0 shadow-sm text-center py-5" style="border-radius: var(--sc-radius); background-color: var(--sc-soft);">
+      <i class="bi bi-people fs-1 mb-3" style="color: var(--sc-primary);"></i>
+      <h3 class="h6 fw-bold mb-1" style="color: var(--sc-dark);">Find a Patient</h3>
+      <p class="text-muted small mb-0">Start typing a patient's name, email, or phone number above to pull up their records.</p>
+    </div>
+  {% elif results %}
+    <p class="text-muted small mb-3">{{ results | length }} patient{{ 's' if results | length != 1 else '' }} found for "{{ term }}"</p>
+    <div class="row g-3">
+      {% for patient in results %}
+        <div class="col-md-6 col-lg-4">
+          <a href="{{ url_for('doctor.patient_records', patient_id=patient.id) }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: var(--sc-radius);">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:44px; height:44px; background-color: var(--sc-soft);">
+                  <i class="bi bi-person-fill fs-5" style="color: var(--sc-dark);"></i>
+                </div>
+                <div>
+                  <h3 class="h6 fw-bold mb-0" style="color: var(--sc-dark);">{{ patient.full_name }}</h3>
+                  {% if last_visit_map.get(patient.id) %}
+                    <span class="badge" style="background-color: var(--sc-success); font-size: 0.68rem;">
+                      Last visit: {{ last_visit_map[patient.id].strftime('%d %b %Y') }}
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary" style="font-size: 0.68rem;">New patient</span>
+                  {% endif %}
+                </div>
+              </div>
+              <p class="small text-muted mb-0"><i class="bi bi-envelope me-1"></i>{{ patient.user.email }}</p>
+              <p class="small text-muted mb-0"><i class="bi bi-telephone me-1"></i>{{ patient.user.phone or 'No phone on file' }}</p>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card border-0 shadow-sm text-center py-5" style="border-radius: var(--sc-radius);">
+      <i class="bi bi-search fs-1 mb-3 text-muted"></i>
+      <h3 class="h6 fw-bold mb-1" style="color: var(--sc-dark);">No patients found</h3>
+      <p class="text-muted small mb-0">No results for "{{ term }}" — try a different name, email, or phone number.</p>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+    <div>
+      <h1 class="fw-bold mb-1">{{ single_patient.full_name }}</h1>
+      <p class="text-muted mb-0">{{ single_patient.user.email }} &middot; {{ single_patient.user.phone or 'No phone on file' }}</p>
+    </div>
+    <a href="{{ url_for('doctor.patient_search') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Search
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3">Details</h2>
+        <p class="small mb-1"><strong>DOB:</strong> {{ single_patient.date_of_birth.strftime('%d %b %Y') if single_patient.date_of_birth else '—' }}</p>
+        <p class="small mb-1"><strong>Gender:</strong> {{ single_patient.gender or '—' }}</p>
+        <p class="small mb-1"><strong>Blood Group:</strong> {{ single_patient.blood_group or '—' }}</p>
+        <p class="small mb-0"><strong>Emergency Contact:</strong> {{ single_patient.emergency_contact or '—' }}</p>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3">Appointments with You</h2>
+        {% for appt in appointments %}
+          <div class="d-flex justify-content-between align-items-center border-bottom py-2 flex-wrap gap-2">
+            <span class="small">
+              {{ appt.appointment_date.strftime('%d %b %Y') }} — {{ appt.time_slot }}
+              {% if appt.consultation_type == 'online' %}
+                <span class="badge bg-info text-dark ms-1"><i class="bi bi-camera-video me-1"></i>Online</span>
+              {% endif %}
+            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge" style="background-color:
+                {% if appt.status.value == 'approved' %}var(--sc-success)
+                {% elif appt.status.value in ['cancelled', 'rejected'] %}#c0554b
+                {% elif appt.status.value == 'completed' %}var(--sc-primary)
+                {% else %}var(--sc-cta){% endif %};">
+                {{ appt.status.value.title() }}
+              </span>
+              {% if appt.status.value == 'approved' %}
+                {% if appt.consultation_type == 'online' and appt.meeting_link %}
+                  <a href="{{ appt.meeting_link }}" target="_blank" rel="noopener" class="btn btn-sm" style="background-color: var(--sc-cta); color:#fff;">
+                    <i class="bi bi-camera-video-fill me-1"></i>Join Call
+                  </a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('doctor.complete', appointment_id=appt.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm" style="background-color: var(--sc-primary); color:#fff;">Mark Completed</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No appointments with this patient yet.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--sc-radius);">
+        <h2 class="h6 fw-bold mb-3">Prescriptions</h2>
+        {% for p in prescriptions %}
+          <div class="border-bottom py-2">
+            <div class="d-flex justify-content-between">
+              <strong class="small">Dr. {{ p.doctor.full_name }}</strong>
+              <small class="text-muted">{{ p.created_at.strftime('%d %b %Y') }}</small>
+            </div>
+            <p class="small text-muted mb-0">{{ p.diagnosis or 'No diagnosis noted' }}</p>
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No prescriptions yet.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h6 fw-bold mb-0">Lab Reports</h2>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('doctor.generate_report') }}" class="btn btn-sm" style="background-color: var(--sc-cta); color:#fff;">
+              <i class="bi bi-file-earmark-medical me-1"></i>Generate
+            </a>
+            <a href="{{ url_for('doctor.upload_report') }}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-upload me-1"></i>Upload
+            </a>
+          </div>
+        </div>
+        {% for r in reports %}
+          <div class="d-flex justify-content-between border-bottom py-2">
+            <span class="small">
+              {{ r.title }} <span class="text-muted">({{ r.report_type }})</span>
+              {% if r.is_generated %}<span class="badge ms-1" style="background-color: var(--sc-success); font-size: 0.65rem;">System-generated</span>{% endif %}
+            </span>
+            <small class="text-muted">{{ r.uploaded_at.strftime('%d %b %Y') }}</small>
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No lab reports yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

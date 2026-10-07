@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Upload Lab Report — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="fw-bold mb-0">Upload Lab Report</h1>
+      <a href="{{ url_for('doctor.generate_report') }}" class="small">
+        Generate one instead? <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+    <p class="text-muted small mb-4">
+      Use this for scans, X-rays, or reports that already exist as a file (e.g. from an external lab).
+      For blood tests and similar structured results, use <a href="{{ url_for('doctor.generate_report') }}">Generate Report</a> instead —
+      it builds a properly formatted PDF with the correct patient's name every time.
+    </p>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.patient_id.label(class="form-label fw-semibold") }}
+          {{ form.patient_id(class="form-select") }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.title.label(class="form-label fw-semibold") }}
+          {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="e.g. Chest X-Ray") }}
+          {% for error in form.title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.report_type.label(class="form-label fw-semibold") }}
+          {{ form.report_type(class="form-select") }}
+        </div>
+
+        <div class="mb-4">
+          {{ form.file.label(class="form-label fw-semibold") }}
+          {{ form.file(class="form-control" + (" is-invalid" if form.file.errors else "")) }}
+          {% for error in form.file.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          <div class="form-text">PDF or image, up to 10MB.</div>
+        </div>
+
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

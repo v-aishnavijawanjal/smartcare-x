@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Reports — {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <h1 class="fw-bold mb-0">Reports</h1>
+  <div class="d-flex gap-2">
+    {% for p in ['daily', 'weekly', 'monthly'] %}
+      <a href="{{ url_for('admin.reports', period=p) }}" class="btn btn-sm rounded-pill"
+         style="{{ 'background-color: var(--sc-dark); color:#fff;' if period == p else 'border:1px solid #ccc;' }}">
+        {{ p.title() }}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--sc-radius); background-color: var(--sc-soft);">
+      <h2 class="h6 fw-bold mb-3" style="color: var(--sc-dark);">Appointments ({{ period.title() }})</h2>
+      <p class="mb-1" style="color: var(--sc-dark);">Total: <strong>{{ appt_summary.total }}</strong></p>
+      <p class="mb-1" style="color: var(--sc-dark);">Approved: <strong>{{ appt_summary.approved }}</strong></p>
+      <p class="mb-1" style="color: var(--sc-dark);">Completed: <strong>{{ appt_summary.completed }}</strong></p>
+      <p class="mb-0" style="color: var(--sc-dark);">Cancelled: <strong>{{ appt_summary.cancelled }}</strong></p>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Revenue (Monthly)</h2>
+      <p class="mb-1">Billed: <strong>₹{{ '%.2f' | format(rev_summary.total_billed) }}</strong></p>
+      <p class="mb-1">Collected: <strong>₹{{ '%.2f' | format(rev_summary.total_collected) }}</strong></p>
+      <p class="mb-0">Outstanding: <strong>₹{{ '%.2f' | format(rev_summary.outstanding) }}</strong></p>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Patients</h2>
+      <p class="mb-1">Total Registered: <strong>{{ patient_stats.total_patients }}</strong></p>
+      <p class="mb-0">New This Month: <strong>{{ patient_stats.new_this_month }}</strong></p>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--sc-radius);">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h6 fw-bold mb-0">Appointment Detail — {{ period.title() }}</h2>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.export_appointments_csv', period=period) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-filetype-csv me-1"></i>CSV
+      </a>
+      <a href="{{ url_for('admin.export_appointments_pdf', period=period) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-filetype-pdf me-1"></i>PDF
+      </a>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for a in appt_rows %}
+          <tr>
+            <td>{{ a.patient.full_name }}</td>
+            <td>Dr. {{ a.doctor.full_name }}</td>
+            <td>{{ a.appointment_date.strftime('%d %b %Y') }}</td>
+            <td>{{ a.time_slot }}</td>
+            <td>{{ a.status.value.title() }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-3">No appointments in this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h6 fw-bold mb-0">Doctor Performance</h2>
+    <a href="{{ url_for('admin.export_doctor_performance_csv') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-filetype-csv me-1"></i>CSV
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Doctor</th><th>Total Appointments</th><th>Completed</th></tr></thead>
+      <tbody>
+        {% for row in doctor_perf %}
+          <tr>
+            <td>Dr. {{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3" class="text-center text-muted py-3">No data yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

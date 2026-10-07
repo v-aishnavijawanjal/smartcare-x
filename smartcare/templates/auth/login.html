@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Log In — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-5">
+
+    <div class="text-center mb-4">
+      <i class="bi bi-heart-pulse-fill fs-1" style="color: var(--sc-primary);"></i>
+      <h1 class="fw-bold mt-2">Welcome Back</h1>
+      <p class="text-muted">Log in to your SmartCare X account.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.email.label(class="form-label fw-semibold") }}
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", autofocus=true) }}
+          {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="mb-2">
+          {{ form.password.label(class="form-label fw-semibold") }}
+          {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+          {% for error in form.password.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check">
+            {{ form.remember_me(class="form-check-input") }}
+            {{ form.remember_me.label(class="form-check-label small") }}
+          </div>
+          <a href="{{ url_for('auth.forgot_password') }}" class="small">Forgot password?</a>
+        </div>
+
+        {{ form.submit(class="btn w-100 mb-3", style="background-color: var(--sc-cta); color: #fff;") }}
+
+        <p class="text-center small text-muted mb-0">
+          Don't have an account? <a href="{{ url_for('auth.register') }}">Sign up</a>
+        </p>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

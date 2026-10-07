@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Contact — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <div class="text-center mb-4">
+      <h1 class="fw-bold">Get in Touch</h1>
+      <p class="text-muted">Questions, feedback, or partnership inquiries — we'd love to hear from you.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.name.label(class="form-label fw-semibold") }}
+          {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+          {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.email.label(class="form-label fw-semibold") }}
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com") }}
+          {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.subject.label(class="form-label fw-semibold") }}
+          {{ form.subject(class="form-select" + (" is-invalid" if form.subject.errors else ""), id="subjectSelect") }}
+          {% for error in form.subject.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          <div class="mt-2 d-none" id="subjectOtherWrapper">
+            {{ form.subject_other(class="form-control", placeholder="Please specify your subject", id="subjectOtherInput") }}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          {{ form.message.label(class="form-label fw-semibold") }}
+          {{ form.message(class="form-control" + (" is-invalid" if form.message.errors else ""), rows=5) }}
+          {% for error in form.message.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const select = document.getElementById('subjectSelect');
+  const wrapper = document.getElementById('subjectOtherWrapper');
+
+  function sync() {
+    wrapper.classList.toggle('d-none', select.value !== 'Other');
+  }
+
+  select.addEventListener('change', sync);
+  sync();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Manage Receptionists — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Manage Receptionists</h1>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Create Receptionist Account</h2>
+      <form method="POST" action="{{ url_for('admin.create_receptionist') }}" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.full_name.label(class="form-label fw-semibold") }}
+          {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+          {% for error in form.full_name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          {{ form.email.label(class="form-label fw-semibold") }}
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+          {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          {{ form.phone.label(class="form-label fw-semibold") }}
+          {{ form.phone(class="form-control") }}
+        </div>
+        <div class="mb-3">
+          {{ form.password.label(class="form-label fw-semibold") }}
+          {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+          {% for error in form.password.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          {{ form.shift.label(class="form-label fw-semibold") }}
+          {{ form.shift(class="form-select") }}
+        </div>
+        <div class="mb-4">
+          {{ form.desk_number.label(class="form-label fw-semibold") }}
+          {{ form.desk_number(class="form-control") }}
+        </div>
+
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm" style="border-radius: var(--sc-radius);">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th class="ps-4">Name</th><th>Email</th><th>Shift</th><th>Desk</th></tr></thead>
+          <tbody>
+            {% for r in receptionists %}
+              <tr>
+                <td class="ps-4">{{ r.full_name }}</td>
+                <td>{{ r.user.email }}</td>
+                <td>{{ r.shift or '—' }}</td>
+                <td>{{ r.desk_number or '—' }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="4" class="text-center text-muted py-4">No receptionists added yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

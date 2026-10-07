@@ -1,0 +1,32 @@
+# Core
+Flask==3.0.3
+Werkzeug==3.0.3
+
+# Flask Extensions
+Flask-Login==0.6.3
+Flask-Mail==0.10.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.1
+Flask-Migrate==4.0.7
+WTForms==3.1.2
+email-validator==2.1.1
+
+# Database
+SQLAlchemy==2.0.30
+psycopg2-binary==2.9.9
+
+# Configuration
+python-dotenv==1.0.1
+itsdangerous==2.2.0
+
+# PDF
+reportlab==4.2.0
+
+# Payment
+razorpay==1.4.2
+
+# Production
+gunicorn==22.0.0
+
+# Scheduler
+APScheduler

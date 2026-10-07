@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Availability — {% endblock %}
+
+{% block content %}
+<h1 class="fw-bold mb-4">Manage Availability</h1>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Add Weekly Slot</h2>
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.day_of_week.label(class="form-label fw-semibold") }}
+          {{ form.day_of_week(class="form-select") }}
+        </div>
+
+        <div class="row">
+          <div class="col-6 mb-3">
+            {{ form.start_time.label(class="form-label fw-semibold") }}
+            {{ form.start_time(class="form-control") }}
+          </div>
+          <div class="col-6 mb-3">
+            {{ form.end_time.label(class="form-label fw-semibold") }}
+            {{ form.end_time(class="form-control") }}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          {{ form.slot_duration_minutes.label(class="form-label fw-semibold") }}
+          {{ form.slot_duration_minutes(class="form-control") }}
+          <div class="form-text">Each booking slot will be this many minutes long.</div>
+        </div>
+
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Your Weekly Schedule</h2>
+      {% set day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+      {% if slots %}
+        <ul class="list-unstyled mb-0">
+          {% for slot in slots %}
+            <li class="d-flex justify-content-between align-items-center border-bottom py-2">
+              <span class="small">
+                <strong>{{ day_names[slot.day_of_week] }}</strong>
+                — {{ slot.start_time.strftime('%I:%M %p') }} to {{ slot.end_time.strftime('%I:%M %p') }}
+                <span class="text-muted">({{ slot.slot_duration_minutes }} min slots)</span>
+              </span>
+             <form method="POST" action="{{ url_for('doctor.delete_availability', slot_id=slot.id) }}"
+                    onsubmit="return confirm('Remove this availability window?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No availability set yet — add your first weekly slot.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

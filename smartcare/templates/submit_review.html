@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Share Your Experience — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+
+    <div class="text-center mb-4">
+      <h1 class="fw-bold">Share Your Experience</h1>
+      <p class="text-muted">Your feedback helps us — and other patients — get better care.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.rating.label(class="form-label fw-semibold") }}
+          {{ form.rating(class="form-control" + (" is-invalid" if form.rating.errors else ""), min=1, max=5) }}
+          {% for error in form.rating.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          <div class="form-text">A number from 1 (poor) to 5 (excellent).</div>
+        </div>
+
+        <div class="mb-4">
+          {{ form.comment.label(class="form-label fw-semibold") }}
+          {{ form.comment(class="form-control" + (" is-invalid" if form.comment.errors else ""), rows=4, placeholder="Tell us about your visit...") }}
+          {% for error in form.comment.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+        </div>
+
+        {{ form.submit(class="btn w-100", style="background-color: var(--sc-cta); color: #fff;") }}
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

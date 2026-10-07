@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Pay Medicine Bill — {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="mb-4">
+      <h1 class="fw-bold">Medicine Bill</h1>
+      <p class="text-muted">Prescribed on {{ bill.created_at.strftime('%d %b %Y') }}</p>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: var(--sc-radius);">
+      <h2 class="h6 fw-bold mb-3">Items</h2>
+      <table class="table table-sm align-middle mb-3">
+        <thead><tr><th>Medicine</th><th class="text-center">Qty</th><th class="text-end">Unit Price</th><th class="text-end">Total</th></tr></thead>
+        <tbody>
+          {% for item in bill.items %}
+            <tr>
+              <td>{{ item.description }}</td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-end">₹{{ '%.2f' | format(item.unit_price) }}</td>
+              <td class="text-end">₹{{ '%.2f' | format(item.line_total) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="d-flex justify-content-between small mb-1">
+        <span class="text-muted">Subtotal</span>
+        <span>₹{{ '%.2f' | format(bill.subtotal) }}</span>
+      </div>
+      <div class="d-flex justify-content-between small mb-2">
+        <span class="text-muted">Tax</span>
+        <span>₹{{ '%.2f' | format(bill.tax) }}</span>
+      </div>
+      <div class="d-flex justify-content-between fw-bold mb-4" style="font-size:1.1rem;">
+        <span>Total Due</span>
+        <span>₹{{ '%.2f' | format(bill.balance_due) }}</span>
+      </div>
+
+      <button type="button" id="payBillBtn" class="btn w-100" style="background-color: var(--sc-cta); color:#fff;">
+        <i class="bi bi-credit-card me-1"></i> Pay ₹{{ '%.2f' | format(bill.balance_due) }}
+      </button>
+
+      <form method="POST" id="confirmForm" action="{{ url_for('patient.confirm_bill_payment', bill_id=bill.id) }}" class="d-none">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+        <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+        <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const payBtn = document.getElementById('payBillBtn');
+  const confirmForm = document.getElementById('confirmForm');
+
+  payBtn.addEventListener('click', function () {
+    payBtn.disabled = true;
+    payBtn.textContent = 'Processing...';
+
+    fetch(`{{ url_for('patient.create_bill_payment_order', bill_id=bill.id) }}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      }
+    })
+      .then(res => res.json())
+      .then(order => {
+        const options = {
+          key: order.key,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'SmartCare X',
+          description: 'Medicine Payment',
+          order_id: order.order_id,
+          prefill: {
+            name: order.patient_name,
+            email: order.patient_email,
+            contact: order.patient_phone
+          },
+          theme: { color: '#FD802E' },
+          handler: function (response) {
+            document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+            document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('razorpay_signature').value = response.razorpay_signature;
+            confirmForm.submit();
+          },
+          modal: {
+            ondismiss: function () {
+              payBtn.disabled = false;
+              payBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹{{ "%.2f" | format(bill.balance_due) }}';
+            }
+          }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+      });
+  });
+});
+</script>
+{% endblock %}

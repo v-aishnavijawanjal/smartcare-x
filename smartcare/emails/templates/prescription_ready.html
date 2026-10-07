@@ -1,0 +1,13 @@
+{% extends "_base_email.html" %}
+{% block content %}
+<h2 style="color:#233D4C; margin-top:0;">Your Prescription is Ready</h2>
+<p style="color:#3d3d3a; line-height:1.6;">
+  Hi {{ full_name }}, Dr. {{ doctor_name }} has written a new prescription for you.
+</p>
+{% if diagnosis %}
+<p style="color:#3d3d3a; line-height:1.6;"><strong>Diagnosis:</strong> {{ diagnosis }}</p>
+{% endif %}
+<p style="color:#3d3d3a; line-height:1.6;">
+  Log in to your SmartCare X dashboard to view the full prescription and download it as a PDF.
+</p>
+{% endblock %}
