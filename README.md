@@ -1,6 +1,6 @@
 # 🏥 SmartCare X — Intelligent Hospital Management System
 
-SmartCare X is a full-featured hospital management system built using **Python and Flask**.
+SmartCare X is an intelligent hospital management system built using **Python and Flask**. It provides a centralized platform for managing patients, doctors, appointments, prescriptions, medicines, billing, medical reports, and hospital administration.
 
 It provides a centralized platform for managing patients, doctors, receptionists, appointments, prescriptions, medicines, billing, medical reports, and hospital administration.
 
